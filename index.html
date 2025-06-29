@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizador Estudiantil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #f4f4f4;
+      --text-color: #333;
+      --seccion-bg: white;
+      --button-bg: #4a90e2;
+      --task-btn-bg: #e94e77;
+      --noted-day: #c1e1c1;
+    }
+
+    body.dark {
+      --bg-color: #1e1e1e;
+      --text-color: #ffffff;
+      --seccion-bg: #2c2c2c;
+      --button-bg: #0066cc;
+      --task-btn-bg: #cc3366;
+      --noted-day: #3a5940;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+    h1 { text-align: center; margin-bottom: 20px; }
+    nav {
+      text-align: center; margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+    nav button {
+      background: var(--button-bg);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .seccion {
+      display: none;
+      background: var(--seccion-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .seccion.activa { display: block; }
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+    ul { list-style: none; padding: 0; }
+    li {
+      background: #eee;
+      margin-bottom: 10px;
+      padding: 10px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    button.tarea {
+      background: var(--task-btn-bg);
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    iframe {
+      width: 100%;
+      height: 150px;
+      border: none;
+      border-radius: 8px;
+    }
+    .modo-oscuro {
+      margin-top: 10px;
+      text-align: center;
+    }
+    #calendarioDias {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .dia {
+      background: #f1f1f1;
+      padding: 10px;
+      text-align: center;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .dia:hover { background-color: #ddd; }
+    .con-nota {
+      background-color: var(--noted-day) !important;
+    }
+    @media screen and (max-width: 600px) {
+      nav { flex-direction: column; }
+      iframe { height: 200px; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Organizador Estudiantil</h1>
+
+  <nav>
+    <button onclick="mostrarSeccion('calendario')">Calendario</button>
+    <button onclick="mostrarSeccion('tareas')">Lista de Tareas</button>
+    <button onclick="mostrarSeccion('videos')">Videos</button>
+    <button onclick="alternarModoOscuro()">🌙/☀️</button>
+  </nav>
+
+  <!-- Calendario -->
+  <div id="calendario" class="seccion">
+    <h2>Calendario</h2>
+    <div id="calendarioDias"></div>
+    <div id="notasDia" style="display:none;">
+      <h3>Día seleccionado: <span id="diaSeleccionado">Ninguno</span></h3>
+      <textarea id="notaTexto" placeholder="Notas para este día..."></textarea>
+      <button onclick="guardarNota()">Guardar nota</button>
+    </div>
+  </div>
+
+  <!-- Lista de tareas -->
+  <div id="tareas" class="seccion">
+    <h2>Lista de Tareas</h2>
+    <input type="text" id="nuevaTarea" placeholder="Nueva tarea...">
+    <select id="prioridad">
+      <option value="alta">Alta prioridad</option>
+      <option value="media">Media prioridad</option>
+      <option value="baja">Baja prioridad</option>
+    </select>
+    <button onclick="agregarTarea()">Agregar</button>
+    <ul id="listaTareas"></ul>
+  </div>
+
+  <!-- Sección de videos -->
+  <div id="videos" class="seccion">
+    <h2>Videos útiles</h2>
+    <div class="video-grid">
+      <iframe src="https://www.youtube.com/embed/OiKhL8z1r5Q" title="Técnicas de estudio"></iframe>
+      <iframe src="https://www.youtube.com/embed/5mU4YKL9K6o" title="Cómo dejar de procrastinar"></iframe>
+      <iframe src="https://www.youtube.com/embed/nGzREpI8DcE" title="Manejo del estrés y ansiedad"></iframe>
+      <iframe src="https://www.youtube.com/embed/inpok4MKVLM" title="Meditación y relajación"></iframe>
+      <iframe src="https://www.youtube.com/embed/fpHnrrKkFqk" title="Tips y consejos"></iframe>
+    </div>
+  </div>
+
+  <script>
+    let notas = {};
+    let diaActual = null;
+
+    function mostrarSeccion(id) {
+      document.querySelectorAll('.seccion').forEach(seccion => {
+        seccion.classList.remove('activa');
+      });
+      document.getElementById(id).classList.add('activa');
+    }
+
+    function agregarTarea() {
+      const texto = document.getElementById('nuevaTarea').value;
+      const prioridad = document.getElementById('prioridad').value;
+      if (texto.trim() === '') return;
+      const li = document.createElement('li');
+      li.textContent = texto + ' (' + prioridad + ')';
+      const btn = document.createElement('button');
+      btn.textContent = '✕';
+      btn.classList.add('tarea');
+      btn.onclick = () => li.remove();
+      li.appendChild(btn);
+      document.getElementById('listaTareas').appendChild(li);
+      document.getElementById('nuevaTarea').value = '';
+    }
+
+    function generarCalendario() {
+      const calendario = document.getElementById('calendarioDias');
+      for (let i = 1; i <= 30; i++) {
+        const dia = document.createElement('div');
+        dia.classList.add('dia');
+        dia.textContent = i;
+        dia.id = 'dia-' + i;
+        dia.onclick = () => seleccionarDia(i);
+        calendario.appendChild(dia);
+      }
+    }
+
+    function seleccionarDia(dia) {
+      diaActual = dia;
+      document.getElementById('diaSeleccionado').textContent = dia;
+      document.getElementById('notaTexto').value = notas[dia] || '';
+      document.getElementById('notasDia').style.display = 'block';
+    }
+
+    function guardarNota() {
+      if (diaActual !== null) {
+        const texto = document.getElementById('notaTexto').value;
+        notas[diaActual] = texto;
+        const diaDiv = document.getElementById('dia-' + diaActual);
+        if (texto.trim()) {
+          diaDiv.classList.add('con-nota');
+        } else {
+          diaDiv.classList.remove('con-nota');
+        }
+        alert('Nota guardada');
+      }
+    }
+
+    function alternarModoOscuro() {
+      document.body.classList.toggle('dark');
+    }
+
+    generarCalendario();
+    mostrarSeccion('calendario');
+  </script>
+</body>
+</html>
